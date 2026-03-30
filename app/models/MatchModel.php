@@ -19,7 +19,7 @@ class MatchModel extends Model
             INNER JOIN teams t2 ON m.team2_id = t2.id
             WHERE m.tournament_id = :tournament_id
               AND tr.user_id = :user_id
-            ORDER BY m.id ASC
+            ORDER BY m.match_time ASC, m.id ASC
         ");
 
         $stmt->execute([
@@ -32,7 +32,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | CREATE MATCH
+    | CREATE MATCH (🔥 AVEC HEURE)
     |--------------------------------------------------------------------------
     */
     public function create(array $data): bool
@@ -51,12 +51,22 @@ class MatchModel extends Model
 
         $stmt = $this->db->prepare("
             INSERT INTO matches (
-                tournament_id, team1_id, team2_id,
-                score1, score2, status
+                tournament_id,
+                team1_id,
+                team2_id,
+                score1,
+                score2,
+                status,
+                match_time
             )
             VALUES (
-                :tournament_id, :team1_id, :team2_id,
-                NULL, NULL, 'scheduled'
+                :tournament_id,
+                :team1_id,
+                :team2_id,
+                NULL,
+                NULL,
+                'scheduled',
+                :match_time
             )
         ");
 
@@ -64,6 +74,7 @@ class MatchModel extends Model
             'tournament_id' => $data['tournament_id'],
             'team1_id' => $data['team1_id'],
             'team2_id' => $data['team2_id'],
+            'match_time' => $data['match_time'] ?? null
         ]);
     }
 
@@ -118,7 +129,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE SCORE (FIX FINAL)
+    | UPDATE SCORE (🔥 FIX PRO)
     |--------------------------------------------------------------------------
     */
     public function updateScore(int $id, int $userId, int $score1, int $score2): bool
@@ -170,7 +181,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | COUNT MATCHES BY USER
+    | COUNT MATCHES
     |--------------------------------------------------------------------------
     */
     public function countByUser(int $userId): int

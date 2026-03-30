@@ -30,18 +30,26 @@
 
         <?php foreach ($matches as $match): ?>
 
-            <?php $isPlayed = ($match['status'] === 'played'); ?>
+            <?php $isPlayed = ($match['status'] === 'finished'); ?>
 
             <div class="bg-white rounded-2xl shadow p-5 flex items-center justify-between">
 
-                <!-- TEAMS -->
+                <!-- LEFT -->
                 <div class="flex-1">
 
+                    <!-- TEAMS -->
                     <div class="flex items-center justify-between text-lg font-semibold">
                         <span><?= e($match['team1_name']) ?></span>
                         <span class="text-gray-400 text-sm">VS</span>
                         <span><?= e($match['team2_name']) ?></span>
                     </div>
+
+                    <!-- ⏰ HEURE -->
+                    <?php if (!empty($match['match_time'])): ?>
+                        <div class="text-sm text-gray-400 mt-1">
+                            ⏰ <?= date('d/m H:i', strtotime($match['match_time'])) ?>
+                        </div>
+                    <?php endif; ?>
 
                     <!-- SCORE -->
                     <div class="mt-2 text-2xl font-bold text-center">
@@ -67,37 +75,40 @@
 
                 </div>
 
-                <!-- ACTION -->
+                <!-- ACTION (🔥 EDIT + ADD SCORE) -->
                 <div class="ml-6">
 
-                    <?php if (!$isPlayed): ?>
+                    <form method="POST"
+                          action="<?= BASE_URL ?>/index.php?url=matches/updateScore"
+                          class="flex items-center gap-2">
 
-                        <form method="POST"
-                              action="<?= BASE_URL ?>/index.php?url=matches/updateScore"
-                              class="flex items-center gap-2">
+                        <input type="hidden" name="csrf" value="<?= csrfToken() ?>">
+                        <input type="hidden" name="id" value="<?= (int)$match['id'] ?>">
 
-                            <!-- CSRF -->
-                            <input type="hidden" name="csrf" value="<?= csrfToken() ?>">
-                            <input type="hidden" name="id" value="<?= (int)$match['id'] ?>">
+                        <input type="number"
+                               name="score1"
+                               value="<?= $match['score1'] ?? '' ?>"
+                               min="0"
+                               class="w-14 text-center border rounded p-1">
 
-                            <input type="number" name="score1" required min="0"
-                                class="w-14 text-center border rounded p-1">
+                        <span>-</span>
 
-                            <span>-</span>
+                        <input type="number"
+                               name="score2"
+                               value="<?= $match['score2'] ?? '' ?>"
+                               min="0"
+                               class="w-14 text-center border rounded p-1">
 
-                            <input type="number" name="score2" required min="0"
-                                class="w-14 text-center border rounded p-1">
+                        <button class="<?= $isPlayed ? 'bg-orange-500 hover:bg-orange-600' : 'bg-blue-600 hover:bg-blue-700' ?> text-white px-3 py-1 rounded-lg text-sm">
+                            <?= $isPlayed ? '✏️' : '✔' ?>
+                        </button>
 
-                            <button class="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-blue-700">
-                                ✔
-                            </button>
+                    </form>
 
-                        </form>
-
-                    <?php else: ?>
-
-                        <span class="text-gray-400 text-sm">✔ Validé</span>
-
+                    <?php if ($isPlayed): ?>
+                        <div class="text-xs text-gray-400 text-center mt-1">
+                            Modifier le score
+                        </div>
                     <?php endif; ?>
 
                 </div>

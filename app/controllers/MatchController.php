@@ -2,6 +2,11 @@
 
 class MatchController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | INDEX
+    |--------------------------------------------------------------------------
+    */
     public function index(): void
     {
         Auth::requireLogin();
@@ -30,7 +35,7 @@ class MatchController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | GENERATE MATCHES (🔥 VERSION CLEAN)
+    | GENERATE MATCHES (🔥 VERSION PRO)
     |--------------------------------------------------------------------------
     */
     public function generate(): void
@@ -38,7 +43,8 @@ class MatchController extends Controller
         Auth::requireLogin();
 
         if (!verifyCsrf()) {
-            $this->abort(403, 'CSRF invalide');
+            http_response_code(403);
+            die('CSRF invalide');
         }
 
         $tournamentId = (int) ($_POST['tournament_id'] ?? 0);
@@ -63,7 +69,7 @@ class MatchController extends Controller
 
         if (count($teams) < 2) {
             setFlash('error', 'Minimum 2 équipes');
-            $this->redirect('teams&tournament_id=' . $tournamentId);
+            $this->redirect('tournaments/show&id=' . $tournamentId);
         }
 
         $db = Database::connect();
@@ -71,18 +77,31 @@ class MatchController extends Controller
         try {
             $db->beginTransaction();
 
-            // 🔥 clean reset
+            // 🔥 RESET PROPRE (évite doublons)
             $matchModel->clearByTournament($tournamentId, Auth::id());
 
-            // 🔥 round robin simple
-            for ($i = 0; $i < count($teams); $i++) {
-                for ($j = $i + 1; $j < count($teams); $j++) {
+            // 🔥 GÉNÉRATION AVEC HEURE
+            $startTime = new DateTime(); // maintenant
+            $interval = new DateInterval('PT30M'); // 30 min
+
+            $matchTime = clone $startTime;
+            $total = count($teams);
+
+            for ($i = 0; $i < $total; $i++) {
+                for ($j = $i + 1; $j < $total; $j++) {
 
                     $matchModel->create([
                         'tournament_id' => $tournamentId,
-                        'team1_id' => (int) $teams[$i]['id'],
-                        'team2_id' => (int) $teams[$j]['id'],
+                        'team1_id' => $teams[$i]['id'],
+                        'team2_id' => $teams[$j]['id'],
+                        'score1' => null,
+                        'score2' => null,
+                        'status' => 'pending',
+                        'match_time' => $matchTime->format('Y-m-d H:i:s')
                     ]);
+
+                    // ⏰ prochain match
+                    $matchTime->add($interval);
                 }
             }
 
@@ -93,7 +112,7 @@ class MatchController extends Controller
             $db->rollBack();
 
             setFlash('error', 'Erreur génération matchs');
-            $this->back();
+            $this->redirect('tournaments/show&id=' . $tournamentId);
         }
 
         setFlash('success', 'Matchs générés 🔥');
@@ -138,7 +157,7 @@ class MatchController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE SCORE (🔥 FIX TOTAL)
+    | UPDATE SCORE (🔥 VERSION PRO)
     |--------------------------------------------------------------------------
     */
     public function updateScore(): void
@@ -146,7 +165,8 @@ class MatchController extends Controller
         Auth::requireLogin();
 
         if (!verifyCsrf()) {
-            $this->abort(403, 'CSRF invalide');
+            http_response_code(403);
+            die('CSRF invalide');
         }
 
         $matchId = (int) ($_POST['id'] ?? 0);
@@ -160,7 +180,6 @@ class MatchController extends Controller
 
         $matchModel = new MatchModel();
 
-        // 🔥 sécurisé
         $match = $matchModel->find($matchId, Auth::id());
 
         if (!$match) {
