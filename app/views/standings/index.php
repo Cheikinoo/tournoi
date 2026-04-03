@@ -1,24 +1,24 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
-<div class="max-w-6xl mx-auto px-6 py-8">
+<div class="max-w-6xl mx-auto px-6 py-8 space-y-6">
 
     <!-- HEADER -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center justify-between flex-wrap gap-3">
         <div>
-            <h1 class="text-3xl font-bold">🏆 Classement</h1>
-            <p class="text-gray-500 mt-1"><?= e($tournament['name']) ?></p>
+            <h1 class="text-3xl font-bold">📊 Classement</h1>
+            <p class="text-gray-500 text-sm"><?= e($tournament['name']) ?></p>
         </div>
 
-        <a href="<?= BASE_URL ?>/index.php?url=matches&tournament_id=<?= (int) $tournament['id'] ?>"
+        <a href="<?= BASE_URL ?>/index.php?url=matches&tournament_id=<?= (int)$tournament['id'] ?>"
            class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">
-            ⚽ Voir matchs
+            ⚽ Voir les matchs
         </a>
     </div>
 
-    <!-- DEBUG (TEMPORAIRE) -->
+    <!-- MESSAGE -->
     <?php if (empty($standings)): ?>
-        <div class="bg-red-100 text-red-700 p-4 mb-4 rounded">
-            ⚠️ Aucun classement généré (vérifie si les matchs sont bien "played")
+        <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl text-sm text-yellow-800">
+            Aucun classement pour le moment. Joue des matchs pour le générer.
         </div>
     <?php endif; ?>
 
@@ -26,6 +26,7 @@
     <div class="bg-white rounded-2xl shadow overflow-hidden">
 
         <table class="w-full text-sm">
+
             <thead class="bg-gray-100 text-gray-600 uppercase text-xs">
                 <tr>
                     <th class="p-4 text-left">#</th>
@@ -45,11 +46,13 @@
 
                 <?php if (!empty($standings)): ?>
 
-                    <?php foreach ($standings as $team): ?>
+                    <?php foreach ($standings as $i => $team): ?>
 
                         <?php
-                            $position = $team['position'] ?? 0;
+                            $position = $i + 1;
+                            $diff = (int)$team['goal_difference'];
 
+                            // 🎨 Couleurs podium
                             $rowClass = '';
                             if ($position === 1) $rowClass = 'bg-yellow-50';
                             elseif ($position === 2) $rowClass = 'bg-gray-50';
@@ -60,12 +63,9 @@
 
                             <!-- POSITION -->
                             <td class="p-4 font-bold text-lg">
-                                <?php if ($position === 1): ?>
-                                    🥇
-                                <?php elseif ($position === 2): ?>
-                                    🥈
-                                <?php elseif ($position === 3): ?>
-                                    🥉
+                                <?php if ($position === 1): ?>🥇
+                                <?php elseif ($position === 2): ?>🥈
+                                <?php elseif ($position === 3): ?>🥉
                                 <?php else: ?>
                                     <?= $position ?>
                                 <?php endif; ?>
@@ -73,29 +73,50 @@
 
                             <!-- TEAM -->
                             <td class="p-4 font-semibold">
-                                <?= e($team['team_name']) ?>
+                                <div class="flex items-center gap-3">
+
+                                    <img src="/assets/logos/<?= e($team['logo'] ?? 'logo1.png') ?>"
+                                         class="w-8 h-8 rounded-full object-contain border shadow">
+
+                                    <span><?= e($team['team_name']) ?></span>
+
+                                </div>
                             </td>
 
                             <!-- STATS -->
-                            <td class="p-4 text-center"><?= (int) $team['played'] ?></td>
-                            <td class="p-4 text-center text-green-600 font-medium"><?= (int) $team['wins'] ?></td>
-                            <td class="p-4 text-center"><?= (int) $team['draws'] ?></td>
-                            <td class="p-4 text-center text-red-500"><?= (int) $team['losses'] ?></td>
+                            <td class="p-4 text-center"><?= (int)$team['played'] ?></td>
 
-                            <td class="p-4 text-center"><?= (int) $team['goals_for'] ?></td>
-                            <td class="p-4 text-center"><?= (int) $team['goals_against'] ?></td>
+                            <td class="p-4 text-center text-green-600 font-semibold">
+                                <?= (int)$team['wins'] ?>
+                            </td>
+
+                            <td class="p-4 text-center">
+                                <?= (int)$team['draws'] ?>
+                            </td>
+
+                            <td class="p-4 text-center text-red-500">
+                                <?= (int)$team['losses'] ?>
+                            </td>
+
+                            <td class="p-4 text-center">
+                                <?= (int)$team['goals_for'] ?>
+                            </td>
+
+                            <td class="p-4 text-center">
+                                <?= (int)$team['goals_against'] ?>
+                            </td>
 
                             <!-- DIFF -->
-                            <td class="p-4 text-center font-medium">
-                                <?php
-                                    $diff = (int) $team['goal_difference'];
-                                    echo ($diff > 0 ? '+' : '') . $diff;
-                                ?>
+                            <td class="p-4 text-center font-semibold 
+                                <?= $diff > 0 ? 'text-green-600' : ($diff < 0 ? 'text-red-500' : 'text-gray-500') ?>">
+
+                                <?= $diff > 0 ? '+' : '' ?><?= $diff ?>
+
                             </td>
 
                             <!-- POINTS -->
-                            <td class="p-4 text-right font-bold text-lg">
-                                <?= (int) $team['points'] ?>
+                            <td class="p-4 text-right font-bold text-xl">
+                                <?= (int)$team['points'] ?>
                             </td>
 
                         </tr>
@@ -105,17 +126,14 @@
                 <?php else: ?>
 
                     <tr>
-                        <td colspan="10" class="p-10 text-center">
+                        <td colspan="10" class="p-10 text-center text-gray-500">
 
-                            <div class="flex flex-col items-center gap-3 text-gray-500">
-                                <div class="text-4xl">📊</div>
-                                <p>Aucun classement disponible</p>
+                            <p class="text-lg">Aucun classement disponible</p>
 
-                                <a href="<?= BASE_URL ?>/index.php?url=matches&tournament_id=<?= (int) $tournament['id'] ?>"
-                                   class="bg-black text-white px-4 py-2 rounded-lg mt-2">
-                                    Voir les matchs
-                                </a>
-                            </div>
+                            <a href="<?= BASE_URL ?>/index.php?url=matches&tournament_id=<?= (int)$tournament['id'] ?>"
+                               class="bg-black text-white px-4 py-2 rounded-lg mt-3 inline-block">
+                                Voir les matchs
+                            </a>
 
                         </td>
                     </tr>
@@ -123,9 +141,9 @@
                 <?php endif; ?>
 
             </tbody>
+
         </table>
+
     </div>
 
 </div>
-
-<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

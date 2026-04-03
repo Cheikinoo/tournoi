@@ -35,7 +35,7 @@ class MatchController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | GENERATE MATCHES (🔥 VERSION PRO)
+    | GENERATE MATCHES (🔥 VERSION PRO ROUND ROBIN)
     |--------------------------------------------------------------------------
     */
     public function generate(): void
@@ -77,32 +77,56 @@ class MatchController extends Controller
         try {
             $db->beginTransaction();
 
-            // 🔥 RESET PROPRE (évite doublons)
+            // 🔥 RESET PROPRE
             $matchModel->clearByTournament($tournamentId, Auth::id());
 
-            // 🔥 GÉNÉRATION AVEC HEURE
-            $startTime = new DateTime(); // maintenant
-            $interval = new DateInterval('PT30M'); // 30 min
+            $teamIds = array_column($teams, 'id');
+            $numTeams = count($teamIds);
 
-            $matchTime = clone $startTime;
-            $total = count($teams);
+            // 👉 si impair → bye
+            if ($numTeams % 2 !== 0) {
+                $teamIds[] = null;
+                $numTeams++;
+            }
 
-            for ($i = 0; $i < $total; $i++) {
-                for ($j = $i + 1; $j < $total; $j++) {
+            $rounds = $numTeams - 1;
+            $half = $numTeams / 2;
 
-                    $matchModel->create([
-                        'tournament_id' => $tournamentId,
-                        'team1_id' => $teams[$i]['id'],
-                        'team2_id' => $teams[$j]['id'],
-                        'score1' => null,
-                        'score2' => null,
-                        'status' => 'pending',
-                        'match_time' => $matchTime->format('Y-m-d H:i:s')
-                    ]);
+            // ⏰ planning
+            $startDateTime = new DateTime();
+            $interval = new DateInterval('PT30M');
+            $currentTime = clone $startDateTime;
 
-                    // ⏰ prochain match
-                    $matchTime->add($interval);
+            for ($round = 0; $round < $rounds; $round++) {
+
+                for ($i = 0; $i < $half; $i++) {
+
+                    $team1 = $teamIds[$i];
+                    $team2 = $teamIds[$numTeams - 1 - $i];
+
+                    if ($team1 !== null && $team2 !== null) {
+
+                        $matchModel->create([
+                            'tournament_id' => $tournamentId,
+                            'team1_id' => $team1,
+                            'team2_id' => $team2,
+                            'score1' => null,
+                            'score2' => null,
+                            'status' => 'scheduled',
+                            'round' => $round + 1,
+                            'match_date' => $currentTime->format('Y-m-d'),
+                            'match_time' => $currentTime->format('H:i:s')
+                        ]);
+
+                        $currentTime->add($interval);
+                    }
                 }
+
+                // 🔁 rotation
+                $fixed = array_shift($teamIds);
+                $last = array_pop($teamIds);
+                array_unshift($teamIds, $fixed);
+                array_splice($teamIds, 1, 0, [$last]);
             }
 
             $db->commit();
@@ -115,7 +139,7 @@ class MatchController extends Controller
             $this->redirect('tournaments/show&id=' . $tournamentId);
         }
 
-        setFlash('success', 'Matchs générés 🔥');
+        setFlash('success', 'Matchs générés PRO 🔥');
 
         $this->redirect('matches&tournament_id=' . $tournamentId);
     }
@@ -179,7 +203,6 @@ class MatchController extends Controller
         }
 
         $matchModel = new MatchModel();
-
         $match = $matchModel->find($matchId, Auth::id());
 
         if (!$match) {

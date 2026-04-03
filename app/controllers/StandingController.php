@@ -27,13 +27,14 @@ class StandingController extends Controller
         $teams = $teamModel->getByTournament($tournamentId, Auth::id());
         $matches = $matchModel->getByTournament($tournamentId, Auth::id());
 
-        // 🔥 INIT
+        // 🔥 INIT AVEC LOGO (FIX)
         $standings = [];
 
         foreach ($teams as $team) {
             $standings[] = [
                 'team_id' => (int) $team['id'],
                 'team_name' => $team['name'],
+                'logo' => $team['logo'] ?? 'logo1.png', // 🔥 FIX ICI
                 'played' => 0,
                 'wins' => 0,
                 'draws' => 0,
@@ -48,9 +49,7 @@ class StandingController extends Controller
         // 🔥 CALCUL
         foreach ($matches as $match) {
 
-            // ✅ FIX ICI
             if ($match['status'] !== 'finished') continue;
-
             if ($match['score1'] === null || $match['score2'] === null) continue;
 
             $team1Id = (int) $match['team1_id'];
@@ -100,7 +99,7 @@ class StandingController extends Controller
             unset($team);
         }
 
-        // 🔥 GOAL DIFFERENCE
+        // 🔥 DIFF
         foreach ($standings as &$row) {
             $row['goal_difference'] = $row['goals_for'] - $row['goals_against'];
         }
@@ -115,7 +114,7 @@ class StandingController extends Controller
                 strcmp($a['team_name'], $b['team_name']);
         });
 
-        // 🔥 POSITION PRO
+        // 🔥 POSITION
         $position = 1;
         $last = null;
 

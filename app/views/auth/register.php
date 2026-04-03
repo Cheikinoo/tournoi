@@ -1,19 +1,23 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
 
-    <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+    <div class="bg-white p-8 rounded-2xl shadow w-full max-w-md space-y-6">
 
         <!-- HEADER -->
-        <h2 class="text-2xl font-bold mb-2 text-center">
-            🚀 Créer un compte
-        </h2>
+        <div class="text-center">
+            <h2 class="text-2xl font-bold">
+                Créer un compte
+            </h2>
 
-        <p class="text-gray-500 text-sm text-center mb-6">
-            Commence à gérer tes tournois dès maintenant
-        </p>
+            <p class="text-gray-500 text-sm mt-1">
+                Lance ton premier tournoi en quelques secondes
+            </p>
+        </div>
 
-        <form method="POST" action="<?= BASE_URL ?>/index.php?url=register" class="space-y-4">
+        <!-- FORM -->
+        <form method="POST"
+              action="<?= BASE_URL ?>/index.php?url=register"
+              class="space-y-4">
 
-            <!-- CSRF -->
             <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 
             <!-- NAME -->
@@ -24,7 +28,7 @@
                        placeholder="Ex: John Doe"
                        required
                        autocomplete="name"
-                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-600">
+                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:outline-none">
             </div>
 
             <!-- EMAIL -->
@@ -35,7 +39,7 @@
                        placeholder="exemple@email.com"
                        required
                        autocomplete="email"
-                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-600">
+                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:outline-none">
             </div>
 
             <!-- PASSWORD -->
@@ -47,21 +51,33 @@
                        required
                        minlength="6"
                        autocomplete="new-password"
-                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-600">
+                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:outline-none">
+                
+                <p class="text-xs text-gray-400 mt-1">
+                    Minimum 6 caractères
+                </p>
             </div>
 
             <!-- SUBMIT -->
-            <button class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition">
-                S’inscrire
+            <button id="submitBtn"
+                    class="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition font-semibold">
+                Créer un compte
             </button>
 
         </form>
 
-        <!-- FOOTER -->
-        <p class="text-center text-sm mt-5 text-gray-500">
+        <!-- DIVIDER -->
+        <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <span class="text-xs text-gray-400">ou</span>
+            <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+
+        <!-- LOGIN -->
+        <p class="text-center text-sm text-gray-500">
             Déjà un compte ?
             <a href="<?= BASE_URL ?>/index.php?url=login"
-               class="text-blue-600 hover:underline">
+               class="text-gray-900 hover:underline font-medium">
                 Se connecter
             </a>
         </p>
@@ -69,3 +85,15 @@
     </div>
 
 </div>
+
+<script>
+
+const form = document.querySelector('form');
+const btn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', () => {
+    btn.innerText = "Création...";
+    btn.disabled = true;
+});
+
+</script>

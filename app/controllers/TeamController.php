@@ -7,35 +7,39 @@ class TeamController extends Controller
     | INDEX
     |--------------------------------------------------------------------------
     */
-    public function index(): void
-    {
-        Auth::requireLogin();
+public function index(): void
+{
+    Auth::requireLogin();
 
-        $tournamentId = (int) ($_GET['tournament_id'] ?? 0);
+    $tournamentId = (int) ($_GET['tournament_id'] ?? 0);
 
-        if ($tournamentId <= 0) {
-            setFlash('error', 'Tournoi invalide');
-            $this->redirect('dashboard');
-        }
-
-        $tournamentModel = new Tournament();
-        $teamModel = new Team();
-
-        $tournament = $tournamentModel->findOwned($tournamentId, Auth::id());
-
-        if (!$tournament) {
-            setFlash('error', 'Tournoi introuvable');
-            $this->redirect('tournaments');
-        }
-
-        $teams = $teamModel->getByTournament($tournamentId, Auth::id());
-
-        $this->view('teams/index', compact('tournament', 'teams'));
+    // 🔥 FIX UX : redirection propre si pas d'id
+    if ($tournamentId <= 0) {
+        setFlash('error', 'Veuillez sélectionner un tournoi');
+        $this->redirect('tournaments');
     }
 
+    $tournamentModel = new Tournament();
+    $teamModel = new Team();
+
+    $tournament = $tournamentModel->findOwned($tournamentId, Auth::id());
+
+    // 🔒 sécurité
+    if (!$tournament) {
+        setFlash('error', 'Tournoi introuvable ou accès refusé');
+        $this->redirect('tournaments');
+    }
+
+    $teams = $teamModel->getByTournament($tournamentId, Auth::id());
+
+    $this->view('teams/index', [
+        'tournament' => $tournament,
+        'teams' => $teams
+    ]);
+}
     /*
     |--------------------------------------------------------------------------
-    | STORE (TEAM + PLAYERS 🔥 VERSION PRO)
+    | STORE (🔥 VERSION AVEC LOGO)
     |--------------------------------------------------------------------------
     */
     public function store(): void
@@ -48,12 +52,14 @@ class TeamController extends Controller
             die('CSRF invalide');
         }
 
-        // 🔥 VALIDATION
-        $data = $this->validate($_POST, [
-            'team_name' => 'required|min:2',
-        ]);
-
+        $name = trim($_POST['team_name'] ?? '');
+        $logo = $_POST['logo'] ?? 'logo1.png';
         $tournamentId = (int) ($_POST['tournament_id'] ?? 0);
+
+        if (!$name || strlen($name) < 2) {
+            setFlash('error', 'Nom invalide (min 2 caractères)');
+            $this->back();
+        }
 
         if ($tournamentId <= 0) {
             setFlash('error', 'Tournoi invalide');
@@ -62,9 +68,8 @@ class TeamController extends Controller
 
         $tournamentModel = new Tournament();
         $teamModel = new Team();
-        $playerModel = new Player();
 
-        // 🔒 SECURITY CHECK
+        // 🔒 sécurité
         $tournament = $tournamentModel->findOwned($tournamentId, Auth::id());
 
         if (!$tournament) {
@@ -72,58 +77,20 @@ class TeamController extends Controller
             $this->redirect('tournaments');
         }
 
-        // 🔥 TRANSACTION
-        $db = Database::connect();
+        $success = $teamModel->create([
+            'name' => $name,
+            'logo' => $logo,
+            'tournament_id' => $tournamentId
+        ]);
 
-        try {
-
-            $db->beginTransaction();
-
-            // CREATE TEAM
-            $teamId = $teamModel->create([
-                'name' => $data['team_name'],
-                'tournament_id' => $tournamentId
-            ]);
-
-            if (!$teamId) {
-                throw new Exception('Erreur création équipe');
-            }
-
-            // PLAYERS
-            $players = $_POST['players'] ?? [];
-            $numbers = $_POST['numbers'] ?? [];
-
-            foreach ($players as $index => $playerName) {
-
-                $playerName = trim($playerName);
-                if (!$playerName) continue;
-
-                $number = isset($numbers[$index]) && $numbers[$index] !== ''
-                    ? (int) $numbers[$index]
-                    : null;
-
-                $playerModel->create([
-                    'team_id' => $teamId,
-                    'name' => $playerName,
-                    'number' => $number
-                ]);
-            }
-
-            $db->commit();
-
-        } catch (Exception $e) {
-
-            $db->rollBack();
-
-            setFlash('error', 'Erreur lors de la création');
+        if (!$success) {
+            setFlash('error', 'Erreur création équipe');
             $this->back();
         }
 
-        // 🔥 REGEN CSRF (FIX BUG 403)
+        setFlash('success', 'Équipe ajoutée 🔥');
 
-        setFlash('success', 'Équipe + joueurs ajoutés 🔥');
-
-        // 🔥 UX FIX (rester sur tournoi)
+        // 🔥 UX : retour sur le tournoi
         $this->redirect('tournaments/show&id=' . $tournamentId);
     }
 
@@ -136,7 +103,6 @@ class TeamController extends Controller
     {
         Auth::requireLogin();
 
-        // 🔒 CSRF
         if (!verifyCsrf()) {
             http_response_code(403);
             die('CSRF invalide');
@@ -153,7 +119,6 @@ class TeamController extends Controller
         $teamModel = new Team();
         $tournamentModel = new Tournament();
 
-        // 🔒 SECURITY CHECK
         $tournament = $tournamentModel->findOwned($tournamentId, Auth::id());
 
         if (!$tournament) {
@@ -168,12 +133,8 @@ class TeamController extends Controller
             $this->back();
         }
 
-        // 🔥 REGEN CSRF (FIX BUG 403)
-        $_SESSION['csrf'] = bin2hex(random_bytes(32));
-
         setFlash('success', 'Équipe supprimée');
 
-        // 🔥 UX FIX
         $this->redirect('tournaments/show&id=' . $tournamentId);
     }
 }

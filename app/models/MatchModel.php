@@ -4,7 +4,7 @@ class MatchModel extends Model
 {
     /*
     |--------------------------------------------------------------------------
-    | GET MATCHES BY TOURNAMENT
+    | GET MATCHES BY TOURNAMENT (🔥 AVEC LOGOS)
     |--------------------------------------------------------------------------
     */
     public function getByTournament(int $tournamentId, int $userId): array
@@ -12,7 +12,9 @@ class MatchModel extends Model
         $stmt = $this->db->prepare("
             SELECT m.*,
                    t1.name AS team1_name,
-                   t2.name AS team2_name
+                   t1.logo AS team1_logo,
+                   t2.name AS team2_name,
+                   t2.logo AS team2_logo
             FROM matches m
             INNER JOIN tournaments tr ON m.tournament_id = tr.id
             INNER JOIN teams t1 ON m.team1_id = t1.id
@@ -101,7 +103,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | FIND MATCH (SECURE)
+    | FIND MATCH (🔥 AVEC LOGOS)
     |--------------------------------------------------------------------------
     */
     public function find(int $id, int $userId): ?array
@@ -109,7 +111,9 @@ class MatchModel extends Model
         $stmt = $this->db->prepare("
             SELECT m.*,
                    t1.name AS team1_name,
-                   t2.name AS team2_name
+                   t1.logo AS team1_logo,
+                   t2.name AS team2_name,
+                   t2.logo AS team2_logo
             FROM matches m
             INNER JOIN tournaments tr ON m.tournament_id = tr.id
             INNER JOIN teams t1 ON m.team1_id = t1.id
@@ -129,7 +133,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE SCORE (🔥 FIX PRO)
+    | UPDATE SCORE (🔥 CLEAN)
     |--------------------------------------------------------------------------
     */
     public function updateScore(int $id, int $userId, int $score1, int $score2): bool
@@ -224,7 +228,7 @@ class MatchModel extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | RECENT MATCHES
+    | RECENT MATCHES (🔥 AVEC LOGOS)
     |--------------------------------------------------------------------------
     */
     public function getRecentByUser(int $userId): array
@@ -232,7 +236,9 @@ class MatchModel extends Model
         $stmt = $this->db->prepare("
             SELECT m.*,
                    t1.name AS team1_name,
-                   t2.name AS team2_name
+                   t1.logo AS team1_logo,
+                   t2.name AS team2_name,
+                   t2.logo AS team2_logo
             FROM matches m
             INNER JOIN tournaments tr ON m.tournament_id = tr.id
             INNER JOIN teams t1 ON m.team1_id = t1.id

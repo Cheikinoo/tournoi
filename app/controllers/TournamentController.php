@@ -30,7 +30,7 @@ class TournamentController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | STORE (🔥 VERSION PRO)
+    | STORE (🔥 VERSION UX PRO)
     |--------------------------------------------------------------------------
     */
     public function store(): void
@@ -41,10 +41,10 @@ class TournamentController extends Controller
             $this->abort(403, 'CSRF invalide');
         }
 
-        // 🔥 garder les anciennes valeurs
+        // garder anciennes valeurs
         setOld($_POST);
 
-        // 🔥 validation
+        // validation
         $name = trim($_POST['name'] ?? '');
 
         if (!required($name) || !minLength($name, 2)) {
@@ -52,7 +52,7 @@ class TournamentController extends Controller
             $this->back();
         }
 
-        // 🔥 nettoyage sécurisé
+        // nettoyage
         $format = $_POST['format'] ?? '5v5';
         $type = $_POST['type'] ?? 'league';
         $status = $_POST['status'] ?? 'draft';
@@ -60,7 +60,8 @@ class TournamentController extends Controller
 
         $model = new Tournament();
 
-        $success = $model->create([
+        // 🔥 IMPORTANT : récupérer ID
+        $tournamentId = $model->create([
             'user_id' => Auth::id(),
             'name' => $name,
             'format' => $format,
@@ -69,16 +70,17 @@ class TournamentController extends Controller
             'match_duration' => $duration,
         ]);
 
-        if (!$success) {
+        if (!$tournamentId) {
             setFlash('error', 'Erreur lors de la création');
             $this->back();
         }
 
-        // 🔥 clear old si succès
         clearOld();
 
         setFlash('success', 'Tournoi créé 🎉');
-        $this->redirect('tournaments');
+
+        // 🔥 UX CRITIQUE : redirection vers le tournoi
+        $this->redirect('tournaments/show&id=' . $tournamentId);
     }
 
     /*
@@ -141,7 +143,7 @@ class TournamentController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | UPDATE (🔥 VERSION PRO)
+    | UPDATE
     |--------------------------------------------------------------------------
     */
     public function update(): void
@@ -182,7 +184,9 @@ class TournamentController extends Controller
         clearOld();
 
         setFlash('success', 'Tournoi mis à jour');
-        $this->redirect('tournaments');
+
+        // 🔥 UX : retour sur le tournoi (pas la liste)
+        $this->redirect('tournaments/show&id=' . $id);
     }
 
     /*
@@ -215,6 +219,7 @@ class TournamentController extends Controller
         }
 
         setFlash('success', 'Tournoi supprimé');
+
         $this->redirect('tournaments');
     }
 }

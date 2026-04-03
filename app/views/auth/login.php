@@ -1,21 +1,23 @@
-<div class="min-h-screen flex items-center justify-center bg-gray-100">
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
 
-    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow-md">
+    <div class="max-w-md w-full bg-white p-8 rounded-2xl shadow space-y-6">
 
         <!-- HEADER -->
-        <h2 class="text-2xl font-bold mb-2 text-center">
-            🔐 Connexion
-        </h2>
+        <div class="text-center">
+            <h2 class="text-2xl font-bold">
+                Connexion
+            </h2>
 
-        <p class="text-gray-500 text-sm text-center mb-6">
-            Accède à ton espace tournoi
-        </p>
+            <p class="text-gray-500 text-sm mt-1">
+                Accède à ton espace tournoi
+            </p>
+        </div>
 
+        <!-- FORM -->
         <form method="POST"
               action="<?= BASE_URL ?>/index.php?url=login"
               class="space-y-4">
 
-            <!-- CSRF -->
             <input type="hidden" name="csrf" value="<?= $_SESSION['csrf'] ?>">
 
             <!-- EMAIL -->
@@ -26,7 +28,7 @@
                        placeholder="exemple@email.com"
                        required
                        autocomplete="email"
-                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900">
+                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:outline-none">
             </div>
 
             <!-- PASSWORD -->
@@ -37,35 +39,44 @@
                        placeholder="••••••••"
                        required
                        autocomplete="current-password"
-                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900">
+                       class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:outline-none">
             </div>
 
             <!-- OPTIONS -->
             <div class="flex justify-between items-center text-sm">
 
-                <label class="flex items-center gap-2">
-                    <input type="checkbox" name="remember" class="rounded">
-                    <span class="text-gray-600">Se souvenir de moi</span>
+                <label class="flex items-center gap-2 cursor-pointer text-gray-600">
+                    <input type="checkbox" name="remember" class="accent-black">
+                    Se souvenir
                 </label>
 
-                <a href="#" class="text-blue-600 hover:underline">
-                    Mot de passe oublié ?
-                </a>
+                <!-- désactivé proprement -->
+                <span class="text-gray-400 cursor-not-allowed">
+                    Mot de passe oublié
+                </span>
 
             </div>
 
             <!-- SUBMIT -->
-            <button class="w-full bg-gray-900 text-white py-2 rounded-lg hover:bg-gray-800 transition">
+            <button id="submitBtn"
+                    class="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition font-semibold">
                 Se connecter
             </button>
 
         </form>
 
+        <!-- DIVIDER -->
+        <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-gray-200"></div>
+            <span class="text-xs text-gray-400">ou</span>
+            <div class="flex-1 h-px bg-gray-200"></div>
+        </div>
+
         <!-- REGISTER -->
-        <p class="text-center text-sm mt-5 text-gray-500">
+        <p class="text-center text-sm text-gray-500">
             Pas encore de compte ?
             <a href="<?= BASE_URL ?>/index.php?url=register"
-               class="text-blue-600 hover:underline">
+               class="text-gray-900 hover:underline font-medium">
                 S’inscrire
             </a>
         </p>
@@ -73,3 +84,15 @@
     </div>
 
 </div>
+
+<script>
+
+const form = document.querySelector('form');
+const btn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', () => {
+    btn.innerText = "Connexion...";
+    btn.disabled = true;
+});
+
+</script>

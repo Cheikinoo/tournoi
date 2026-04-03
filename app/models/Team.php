@@ -10,7 +10,7 @@ class Team extends Model
     public function getByTournament(int $tournamentId, int $userId): array
     {
         $stmt = $this->db->prepare("
-            SELECT t.id, t.name
+            SELECT t.id, t.name, t.logo
             FROM teams t
             JOIN tournaments tr ON t.tournament_id = tr.id
             WHERE t.tournament_id = :tournament_id
@@ -28,17 +28,23 @@ class Team extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | CREATE TEAM (VERSION EXPERT)
+    | CREATE TEAM (🔥 VERSION FIX + LOGO)
     |--------------------------------------------------------------------------
     */
     public function create(array $data): int
     {
-        // 🔒 validation minimale
         if (empty($data['name']) || empty($data['tournament_id'])) {
             return 0;
         }
 
         $name = trim($data['name']);
+        $logo = $data['logo'] ?? 'logo1.png';
+
+        // 🔒 sécurité : whitelist logos
+        $allowedLogos = array_map(fn($i) => "logo$i.png", range(1, 20));
+        if (!in_array($logo, $allowedLogos)) {
+            $logo = 'logo1.png';
+        }
 
         // 🔒 vérifier ownership tournoi
         $check = $this->db->prepare("
@@ -56,7 +62,7 @@ class Team extends Model
             return 0;
         }
 
-        // 🔒 éviter doublons (même nom dans tournoi)
+        // 🔒 éviter doublons
         $exists = $this->db->prepare("
             SELECT id FROM teams
             WHERE tournament_id = :tournament_id
@@ -73,14 +79,16 @@ class Team extends Model
             return 0;
         }
 
+        // 🔥 FIX MAJEUR : ajout logo
         $stmt = $this->db->prepare("
-            INSERT INTO teams (tournament_id, name)
-            VALUES (:tournament_id, :name)
+            INSERT INTO teams (tournament_id, name, logo)
+            VALUES (:tournament_id, :name, :logo)
         ");
 
         $success = $stmt->execute([
             'tournament_id' => $data['tournament_id'],
-            'name' => $name
+            'name' => $name,
+            'logo' => $logo
         ]);
 
         if (!$success) {
@@ -111,13 +119,13 @@ class Team extends Model
 
     /*
     |--------------------------------------------------------------------------
-    | FIND TEAM (🔥 utile pour futur)
+    | FIND TEAM
     |--------------------------------------------------------------------------
     */
     public function find(int $teamId, int $userId): ?array
     {
         $stmt = $this->db->prepare("
-            SELECT t.id, t.name
+            SELECT t.id, t.name, t.logo
             FROM teams t
             JOIN tournaments tr ON t.tournament_id = tr.id
             WHERE t.id = :id AND tr.user_id = :user_id
